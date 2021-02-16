@@ -20,6 +20,13 @@ window.addEventListener('DOMContentLoaded', async function(event) {
 
   // ⬆️ ⬆️ ⬆️ 
   // End Step 1
+
+  let url = `https://api.themoviedb.org/3/movie/now_playing?api_key=f472f4da092709373e8d8c223e3bb32e&language=en-US` 
+
+  let response = await fetch(url)
+  let json = await response.json()
+
+  //console.log(json)
   
   // Step 2: 
   // - Loop through the Array called movies and insert HTML
@@ -33,6 +40,42 @@ window.addEventListener('DOMContentLoaded', async function(event) {
   //   <a href="#" class="watched-button block text-center text-white bg-green-500 mt-4 px-4 py-2 rounded">I've watched this!</a>
   // </div>
   // ⬇️ ⬇️ ⬇️
+
+  let db = firebase.firestore()
+
+  let moviesArray = json.results
+
+    for (let i = 0; i<moviesArray.length; i++){
+        let movies = moviesArray[i]
+        let poster = movies.poster_path
+        let posterUrl = `https://image.tmdb.org/t/p/w500${poster}`
+        let movieDiv = document.querySelector('.movies')
+
+        let docRef = await db.collection('watched').doc(`${movies.id}`).get()
+
+        let watched = docRef.data()
+
+        //console.log(watched)
+
+        if (watched){
+        movieDiv.insertAdjacentHTML('beforeend', `
+        <div class="movie-${movies.id} w-1/5 p-4 opacity-20">
+        <img src="${posterUrl}" class="w-full">
+        <a href="#" class="watched-button block text-center text-white bg-green-500 mt-4 px-4 py-2 rounded">I've watched this</a>
+        </div>
+        `)
+        }
+
+        else {
+
+        movieDiv.insertAdjacentHTML('beforeend', `
+        <div class="movie-${movies.id} w-1/5 p-4">
+        <img src="${posterUrl}" class="w-full">
+        <a href="#" class="watched-button block text-center text-white bg-green-500 mt-4 px-4 py-2 rounded">I've watched this</a>
+        </div>
+        `)
+
+        //console.log(movies.id)
 
   // ⬆️ ⬆️ ⬆️ 
   // End Step 2
@@ -48,6 +91,19 @@ window.addEventListener('DOMContentLoaded', async function(event) {
   //   the movie is watched. Use .classList.remove('opacity-20')
   //   to remove the class if the element already contains it.
   // ⬇️ ⬇️ ⬇️
+
+  let watchedButton = document.querySelector(`.movie-${movies.id} .watched-button`) 
+    watchedButton.addEventListener('click', async function(event) {
+    event.preventDefault()
+    document.querySelector(`.movie-${movies.id}`).classList.add('opacity-20')
+    console.log(`i've watched ${movies.id}`)
+    
+    await db.collection('watched').doc(`${movies.id}`).set({})
+       
+    })
+    }
+
+    }
 
   // ⬆️ ⬆️ ⬆️ 
   // End Step 3
